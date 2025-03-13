@@ -1,0 +1,37 @@
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+import '../models/vaccine_worm_model.dart';
+
+class VaccineWormService {
+  static Database? _database;
+
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDB();
+    return _database!;
+  }
+
+  Future<Database> _initDB() async {
+    final path = join(await getDatabasesPath(), "vaccine_worms.db");
+    return openDatabase(
+      path,
+      version: 1,
+      onCreate: (db, version) {
+        return db.execute(
+          "CREATE TABLE vaccine_worms (id TEXT PRIMARY KEY, name TEXT, applicationDate TEXT, manufacturer TEXT, lot TEXT)",
+        );
+      },
+    );
+  }
+
+  Future<void> insertVaccineWorm(VaccineWorm vaccine) async {
+    final db = await database;
+    await db.insert("vaccine_worms", vaccine.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<VaccineWorm>> getVaccineWorms() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query("vaccine_worms");
+    return List.generate(maps.length, (i) => VaccineWorm.fromJson(maps[i]));
+  }
+}

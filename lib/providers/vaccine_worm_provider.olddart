@@ -1,0 +1,18 @@
+import 'package:flutter/material.dart';
+import '../models/vaccine_worm_model.dart';
+
+class VaccineWormProvider with ChangeNotifier {
+  final List<VaccineWorm> _items = [];
+
+  List<VaccineWorm> get items => _items;
+
+  void addVaccineWorm(VaccineWorm vaccine) {
+    _items.add(vaccine);
+    notifyListeners();
+  }
+
+  void removeVaccineWorm(String id) {
+    _items.removeWhere((vaccine) => vaccine.id == id);
+    notifyListeners();
+  }
+}
