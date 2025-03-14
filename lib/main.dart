@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:canil_management_app/providers/theme_provider.dart';
 import 'package:canil_management_app/providers/medication_provider.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
-
+import 'providers/pet_provider.dart'; // ✅ Importação corrigida
+import 'providers/cio_provider.dart'; // ✅ Importação corrigida
 import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/pet_register_screen.dart';
@@ -20,6 +21,8 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(create: (context) => MedicationProvider()), // 🔥 Adicionando o Provider de Medicamentos
+        ChangeNotifierProvider(create: (context) => PetProvider()), // ✅ Certifique-se de que ele está aqui
+        ChangeNotifierProvider(create: (context) => CioProvider()),
       ],
       child: MyApp(),
     ),

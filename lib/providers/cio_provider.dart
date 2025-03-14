@@ -22,4 +22,13 @@ class CioProvider with ChangeNotifier {
   List<Cio> getCiosByPetId(String petId) {
     return _cios.where((cio) => cio.petId == petId).toList();
   }
+
+  /// 📌 Método corrigido para obter a última data de cio do pet
+  DateTime? getLastCioDate(String petId) {
+    final ciosByPet = getCiosByPetId(petId);
+    if (ciosByPet.isEmpty) return null;
+    
+    ciosByPet.sort((a, b) => b.cioDate.compareTo(a.cioDate)); // Ordena do mais recente para o mais antigo
+    return ciosByPet.first.cioDate; // Retorna a data do último cio
+  }
 }

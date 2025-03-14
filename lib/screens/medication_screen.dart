@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/pet_provider.dart';
 import '../providers/medication_provider.dart';
 import 'package:intl/intl.dart';
 
@@ -16,6 +17,7 @@ class _MedicationScreenState extends State<MedicationScreen> {
 
   final TextEditingController manufacturerController = TextEditingController();
   final TextEditingController batchController = TextEditingController();
+  Pet? selectedPet;
 
   void _calculateNextApplication(BuildContext context) {
     if (selectedMedication != null && applicationDate != null) {
@@ -63,6 +65,7 @@ class _MedicationScreenState extends State<MedicationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final petProvider = Provider.of<PetProvider>(context);
     final medicationProvider = Provider.of<MedicationProvider>(context);
     final medications = medicationProvider.medications;
     final applied = medicationProvider.appliedMedications;
@@ -75,6 +78,22 @@ class _MedicationScreenState extends State<MedicationScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            DropdownButtonFormField<Pet>(
+              decoration: InputDecoration(labelText: 'Selecione o Pet'),
+              items: petProvider.pets.map((Pet pet) {
+                return DropdownMenuItem<Pet>(
+                  value: pet,
+                  child: Text(pet.name),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedPet = value;
+                });
+              },
+            ),
+            SizedBox(height: 16),
+
             DropdownButtonFormField<Map<String, dynamic>>(
               decoration: InputDecoration(labelText: 'Selecione o Medicamento'),
               items: medications.map((med) {

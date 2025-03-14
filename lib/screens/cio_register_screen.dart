@@ -10,17 +10,52 @@ class CioRegisterScreen extends StatefulWidget {
 }
 
 class _CioRegisterScreenState extends State<CioRegisterScreen> {
-  String? selectedPetId;
+  Pet? selectedPet;
   DateTime? cioDate;
   String? nextCioDate;
+  bool canRegister = true;
 
-  void _calculateNextCio() {
-    if (cioDate != null) {
-      DateTime nextDate = cioDate!.add(Duration(days: 180));
-      setState(() {
-        nextCioDate = DateFormat('dd/MM/yyyy').format(nextDate);
-      });
+  void _calculateNextCio(BuildContext context) {
+    if (cioDate != null && selectedPet != null) {
+      final cioProvider = Provider.of<CioProvider>(context, listen: false);
+      DateTime? lastCioDate = cioProvider.getLastCioDate(selectedPet!.id);
+
+      if (lastCioDate == null || cioDate!.isAfter(lastCioDate)) {
+        DateTime nextDate = cioDate!.add(Duration(days: 180));
+        setState(() {
+          nextCioDate = DateFormat('dd/MM/yyyy').format(nextDate);
+          canRegister = true;
+        });
+      } else {
+        setState(() {
+          nextCioDate = DateFormat('dd/MM/yyyy').format(lastCioDate.add(Duration(days: 180)));
+          canRegister = false;
+        });
+      }
     }
+  }
+
+  void _showReturnDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Período do Cio Salvo"),
+        content: Text("Deseja voltar ao menu principal?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), // Fica na tela
+            child: Text("Permanecer"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Fecha o diálogo
+              Navigator.pop(context); // Volta para o menu principal
+            },
+            child: Text("Voltar ao Menu"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -35,21 +70,22 @@ class _CioRegisterScreenState extends State<CioRegisterScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            DropdownButtonFormField<String>(
+            DropdownButtonFormField<Pet>(
               decoration: InputDecoration(labelText: 'Selecione a cadela'),
               items: femalePets.map((pet) {
-                return DropdownMenuItem<String>(
-                  value: pet.id,
+                return DropdownMenuItem<Pet>(
+                  value: pet,
                   child: Text("${pet.name} - ${pet.breed}"),
                 );
               }).toList(),
               onChanged: (value) {
                 setState(() {
-                  selectedPetId = value;
+                  selectedPet = value;
                 });
               },
             ),
             SizedBox(height: 16),
+
             TextFormField(
               decoration: InputDecoration(labelText: 'Data do Último Cio'),
               readOnly: true,
@@ -63,7 +99,7 @@ class _CioRegisterScreenState extends State<CioRegisterScreen> {
                 if (pickedDate != null) {
                   setState(() {
                     cioDate = pickedDate;
-                    _calculateNextCio();
+                    _calculateNextCio(context);
                   });
                 }
               },
@@ -72,19 +108,29 @@ class _CioRegisterScreenState extends State<CioRegisterScreen> {
               ),
             ),
             SizedBox(height: 16),
+
             if (nextCioDate != null)
               Text(
-                "Próximo cio previsto: $nextCioDate",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
+                canRegister
+                    ? "Próximo cio previsto: $nextCioDate"
+                    : "Cadastro bloqueado até: $nextCioDate",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: canRegister ? Colors.green : Colors.red,
+                ),
               ),
+
             SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
-                if (selectedPetId != null && cioDate != null) {
-                  cioProvider.addCio(selectedPetId!, cioDate!);
-                  Navigator.pop(context);
-                }
-              },
+              onPressed: canRegister
+                  ? () {
+                      if (selectedPet != null && cioDate != null) {
+                        cioProvider.addCio(selectedPet!.id, cioDate!);
+                        _showReturnDialog(context);
+                      }
+                    }
+                  : null,
               child: Text('Salvar'),
             ),
           ],
@@ -93,93 +139,3 @@ class _CioRegisterScreenState extends State<CioRegisterScreen> {
     );
   }
 }
-
-
-
-/*import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-
-class CioRegisterScreen extends StatefulWidget {
-  @override
-  _CioRegisterScreenState createState() => _CioRegisterScreenState();
-}
-
-class _CioRegisterScreenState extends State<CioRegisterScreen> {
-  final TextEditingController dateController = TextEditingController();
-  String? nextCioDate;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Cadastrar Período do Cio")),
-      body: Padding(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _buildDatePickerField("Data de Início do Cio", dateController),
-            
-            if (nextCioDate != null)
-              Padding(
-                padding: EdgeInsets.only(top: 20),
-                child: Text(
-                  "Próximo cio previsto: $nextCioDate",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-
-            SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: _saveCioData,
-              child: Text("Salvar Período do Cio"),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 📌 Campo para selecionar a data
-  Widget _buildDatePickerField(String label, TextEditingController controller) {
-    return TextField(
-      controller: controller,
-      readOnly: true,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-        suffixIcon: Icon(Icons.calendar_today),
-      ),
-      onTap: () async {
-        DateTime? pickedDate = await showDatePicker(
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime(2020),
-          lastDate: DateTime(2100),
-        );
-
-        if (pickedDate != null) {
-          setState(() {
-            controller.text = DateFormat('dd/MM/yyyy').format(pickedDate);
-            nextCioDate = DateFormat('dd/MM/yyyy')
-                .format(pickedDate.add(Duration(days: 180))); // Calcula o próximo cio
-          });
-        }
-      },
-    );
-  }
-
-  // 📌 Simula salvamento dos dados do cio
-  void _saveCioData() {
-    if (dateController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Por favor, selecione a data de início do cio!")),
-      );
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Período do cio cadastrado com sucesso!")),
-    );
-  }
-}
-*/

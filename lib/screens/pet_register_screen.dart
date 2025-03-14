@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/pet_provider.dart';
 import 'package:intl/intl.dart';
-import 'package:canil_management_app/providers/theme_provider.dart';
 
 class PetRegisterScreen extends StatefulWidget {
   @override
@@ -10,164 +10,214 @@ class PetRegisterScreen extends StatefulWidget {
 
 class _PetRegisterScreenState extends State<PetRegisterScreen> {
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController breedController = TextEditingController();
-  final TextEditingController colorController = TextEditingController();
+  final TextEditingController birthDateController = TextEditingController();
   String gender = "Macho";
+  String? selectedBreed;
+  String? selectedColor;
   DateTime? birthDate;
-  String? calculatedAge;
 
-  void _calculateAge() {
-    if (birthDate == null) return;
+  /// 📌 Lista com todas as raças de cães reconhecidas pela cinofilia mundial
+  final List<String> dogBreeds = [
+    "Labrador Retriever", "Golden Retriever", "Pastor Alemão", "Bulldog Francês", "Poodle", "Rottweiler", "Beagle",
+    "Dachshund", "Shih Tzu", "Border Collie", "Chow Chow", "Doberman", "Akita", "Schnauzer", "Pit Bull", "Chihuahua",
+    "Maltês", "Pug", "Spitz Alemão", "Boxer", "Lhasa Apso", "Husky Siberiano", "Yorkshire Terrier",
+    "Cocker Spaniel", "Setter Irlandês", "Dogue Alemão", "Fox Terrier", "São Bernardo", "Basset Hound",
+    "Weimaraner", "Whippet", "Samoyed", "Bulldog Inglês", "Airedale Terrier", "Cavalier King Charles Spaniel"
+  ];
 
-    final today = DateTime.now();
-    final difference = today.difference(birthDate!);
+  /// 📌 Lista de cores reconhecidas na cinofilia mundial
+  final List<String> dogColors = [
+    "Preto", "Branco", "Marrom", "Caramelo", "Dourado", "Cinzento", "Tricolor", "Bicolor", "Rajado",
+    "Tigrado", "Merle Azul", "Merle Vermelho", "Sable", "Creme", "Vermelho", "Chocolate", "Azul", "Cinza",
+    "Bege", "Prata", "Champagne"
+  ];
 
-    final years = (difference.inDays / 365).floor();
-    final remainingDaysAfterYears = difference.inDays % 365;
-    final months = (remainingDaysAfterYears / 30).floor();
-    final days = remainingDaysAfterYears % 30;
+  void _pickDate(BuildContext context) async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2030),
+    );
 
-    setState(() {
-      calculatedAge = "$years anos, $months meses e $days dias";
-    });
+    if (pickedDate != null) {
+      setState(() {
+        birthDate = pickedDate;
+        birthDateController.text = DateFormat('dd/MM/yyyy').format(pickedDate);
+      });
+    }
+  }
+
+  void _showReturnDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Pet Cadastrado"),
+        content: Text("Deseja voltar ao menu principal?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), // Fica na tela
+            child: Text("Permanecer"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Fecha o diálogo
+              Navigator.pop(context); // Volta para o menu principal
+            },
+            child: Text("Voltar ao Menu"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+    final petProvider = Provider.of<PetProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Cadastro do Pet"),
-        actions: [
-          IconButton(
-            icon: Icon(themeProvider.themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode),
-            onPressed: () {
-              themeProvider.toggleTheme();
-            },
-          ),
-        ],
-      ),
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Cadastro do Pet",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+      appBar: AppBar(title: Text("Cadastro do Pet")),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(labelText: "Nome do Pet"),
+            ),
+
+            /// 📌 Campo para selecionar a raça do pet
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(labelText: "Raça"),
+              value: selectedBreed,
+              items: dogBreeds.map((String breed) {
+                return DropdownMenuItem(value: breed, child: Text(breed));
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedBreed = value;
+                });
+              },
+            ),
+
+            /// 📌 Campo para selecionar a cor do pet
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(labelText: "Cor"),
+              value: selectedColor,
+              items: dogColors.map((String color) {
+                return DropdownMenuItem(value: color, child: Text(color));
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedColor = value;
+                });
+              },
+            ),
+
+            DropdownButtonFormField<String>(
+              value: gender,
+              decoration: InputDecoration(labelText: "Sexo"),
+              items: ["Macho", "Fêmea"].map((value) {
+                return DropdownMenuItem(value: value, child: Text(value));
+              }).toList(),
+              onChanged: (newValue) {
+                setState(() {
+                  gender = newValue!;
+                });
+              },
+            ),
+
+            TextField(
+              controller: birthDateController,
+              decoration: InputDecoration(
+                labelText: "Data de Nascimento",
+                suffixIcon: Icon(Icons.calendar_today),
               ),
-              SizedBox(height: 20),
+              readOnly: true,
+              onTap: () => _pickDate(context),
+            ),
+            SizedBox(height: 16),
 
-              _buildTextField("Nome do Pet", nameController, Icons.pets),
-              _buildTextField("Raça", breedController, Icons.pets),
-              _buildTextField("Cor", colorController, Icons.color_lens),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.isNotEmpty &&
+                    selectedBreed != null &&
+                    selectedColor != null &&
+                    birthDate != null) {
+                  petProvider.addPet(
+                    nameController.text,
+                    selectedBreed!,
+                    gender,
+                    selectedColor!,
+                    birthDate!,
+                  );
 
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: DropdownButtonFormField<String>(
-                  value: gender,
-                  items: ["Macho", "Fêmea"]
-                      .map((String value) => DropdownMenuItem(
-                            value: value,
-                            child: Text(value),
-                          ))
-                      .toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      gender = newValue!;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    labelText: "Sexo",
-                    prefixIcon: Icon(Icons.male, color: Theme.of(context).colorScheme.primary),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[200],
-                  ),
-                ),
+                  nameController.clear();
+                  birthDateController.clear();
+                  setState(() {
+                    gender = "Macho";
+                    selectedBreed = null;
+                    selectedColor = null;
+                    birthDate = null;
+                  });
+
+                  _showReturnDialog(context); // 🔥 Chama o diálogo após salvar o pet
+                }
+              },
+              child: Text("Salvar Pet"),
+            ),
+
+            SizedBox(height: 24),
+
+            /// 📌 Exibe os pets cadastrados em formato de "post-it"
+            Expanded(
+              child: ListView(
+                children: petProvider.pets.map((pet) => _buildPetCard(pet)).toList(),
               ),
-
-              // Campo para Selecionar Data de Nascimento
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    labelText: "Data de Nascimento",
-                    prefixIcon: Icon(Icons.calendar_today, color: Theme.of(context).colorScheme.primary),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[200],
-                  ),
-                  readOnly: true,
-                  onTap: () async {
-                    DateTime? pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime.now(),
-                    );
-                    if (pickedDate != null) {
-                      setState(() {
-                        birthDate = pickedDate;
-                        _calculateAge();
-                      });
-                    }
-                  },
-                  controller: TextEditingController(
-                    text: birthDate != null ? DateFormat('dd/MM/yyyy').format(birthDate!) : '',
-                  ),
-                ),
-              ),
-
-              // Exibir idade calculada
-              if (calculatedAge != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Text(
-                    "Idade: $calculatedAge",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green),
-                  ),
-                ),
-
-              SizedBox(height: 30),
-
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/home');
-                },
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                  padding: EdgeInsets.symmetric(horizontal: 100, vertical: 15),
-                  backgroundColor: Colors.orangeAccent,
-                ),
-                child: Text("Salvar Pet", style: TextStyle(fontSize: 18, color: Colors.white)),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, IconData icon, {bool isNumber = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextField(
-        controller: controller,
-        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.primary),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-          filled: true,
-          fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[200],
+  /// 📌 **Função para calcular a idade do pet**
+  String _calculateAge(DateTime birthDate) {
+    final now = DateTime.now();
+    final difference = now.difference(birthDate);
+
+    final years = (difference.inDays / 365).floor();
+    final months = ((difference.inDays % 365) / 30).floor();
+    final days = (difference.inDays % 30);
+
+    if (years > 0) {
+      return "$years anos, $months meses e $days dias";
+    } else if (months > 0) {
+      return "$months meses e $days dias";
+    } else {
+      return "$days dias";
+    }
+  }
+
+  Widget _buildPetCard(Pet pet) {
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 8),
+      color: Colors.yellow[200], // Post-it style
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Colors.grey[300],
+          child: Icon(Icons.pets, color: Colors.black),
+        ),
+        title: Text(
+          pet.name,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          "Raça: ${pet.breed}\n"
+          "Cor: ${pet.color}\n"
+          "Sexo: ${pet.gender}\n"
+          "Nascimento: ${DateFormat('dd/MM/yyyy').format(pet.birthDate)}\n"
+          "Idade: ${_calculateAge(pet.birthDate)}",
         ),
       ),
     );

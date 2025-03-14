@@ -5,11 +5,16 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.4.3 <4.0.0'
+  sdk: '>=3.7.0 <4.0.0'  # Correção da versão do SDK
 
 dependencies:
   flutter:
     sdk: flutter
+
+  # Firebase
+  firebase_core: ^3.12.1
+  cloud_firestore: ^5.6.5
+  firebase_auth: ^5.5.1  # Se for usar autenticação
 
   # Ícones padrão do iOS (Apple)
   cupertino_icons: ^1.0.6
@@ -27,25 +32,25 @@ dependencies:
   shared_preferences: ^2.3.3
 
   # Formatação de datas e números
-  intl: ^0.18.0
+  intl: ^0.20.2
 
   # Gerador de UUIDs (Identificadores únicos)
-  uuid: ^3.0.7
+  uuid: ^4.5.1
 
   # Notificações locais
-  flutter_local_notifications: ^16.3.3
+  flutter_local_notifications: ^18.0.1
 
   # Abrir URLs e aplicativos externos como WhatsApp
   url_launcher: ^6.1.14
 
   # 📌 Adicionado para agendamentos com `flutter_local_notifications`
-  timezone: ^0.9.2
+  timezone: ^0.10.0
 
   # Exibir mensagens rápidas na tela (exemplo: "Cadastro realizado com sucesso!")
   fluttertoast: ^8.2.2
 
   # Personalizar ícones do aplicativo
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.3
 
   # Banco de dados local (SQLite)
   sqflite: ^2.2.8+4
@@ -56,7 +61,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
 
 flutter:
   uses-material-design: true
@@ -70,4 +75,3 @@ flutter:
     - family: Pacifico
       fonts:
         - asset: assets/fonts/Pacifico-Regular.ttf
-
