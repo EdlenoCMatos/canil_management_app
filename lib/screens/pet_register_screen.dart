@@ -15,6 +15,245 @@ class _PetRegisterScreenState extends State<PetRegisterScreen> {
   String? selectedBreed;
   String? selectedColor;
   DateTime? birthDate;
+  Pet? editingPet; // 🔥 Armazena o pet que está sendo editado
+
+  final List<String> dogBreeds = [
+    "Labrador Retriever", "Golden Retriever", "Pastor Alemão", "Bulldog Francês", "Poodle", "Rottweiler", "Beagle",
+    "Dachshund", "Shih Tzu", "Border Collie", "Chow Chow", "Doberman", "Akita", "Schnauzer", "Pit Bull", "Chihuahua",
+    "Maltês", "Pug", "Spitz Alemão", "Boxer", "Lhasa Apso", "Husky Siberiano", "Yorkshire Terrier",
+    "Cocker Spaniel", "Setter Irlandês", "Dogue Alemão", "Fox Terrier", "São Bernardo", "Basset Hound",
+    "Weimaraner", "Whippet", "Samoyed", "Bulldog Inglês", "Airedale Terrier", "Cavalier King Charles Spaniel"
+  ];
+
+  final List<String> dogColors = [
+    "Preto", "Branco", "Marrom", "Caramelo", "Dourado", "Cinzento", "Tricolor", "Bicolor", "Rajado",
+    "Tigrado", "Merle Azul", "Merle Vermelho", "Sable", "Creme", "Vermelho", "Chocolate", "Azul", "Cinza",
+    "Bege", "Prata", "Champagne"
+  ];
+
+  void _pickDate(BuildContext context) async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2030),
+    );
+
+    if (pickedDate != null) {
+      setState(() {
+        birthDate = pickedDate;
+        birthDateController.text = DateFormat('dd/MM/yyyy').format(pickedDate);
+      });
+    }
+  }
+
+  void _loadPetForEditing(Pet pet) {
+    setState(() {
+      editingPet = pet;
+      nameController.text = pet.name;
+      birthDateController.text = DateFormat('dd/MM/yyyy').format(pet.birthDate);
+      selectedBreed = pet.breed;
+      selectedColor = pet.color;
+      gender = pet.gender;
+      birthDate = pet.birthDate;
+    });
+  }
+
+  /// 🔥 **Função para atualizar um pet já cadastrado**
+  Future<void> _updatePet(BuildContext context) async {
+    if (editingPet != null &&
+        nameController.text.isNotEmpty &&
+        selectedBreed != null &&
+        selectedColor != null &&
+        birthDate != null) {
+      final petProvider = Provider.of<PetProvider>(context, listen: false);
+
+      await petProvider.updatePet(
+        editingPet!.id,
+        nameController.text,
+        selectedBreed!,
+        gender,
+        selectedColor!,
+        birthDate!,
+      );
+
+      setState(() {
+        editingPet = null;
+        nameController.clear();
+        birthDateController.clear();
+        selectedBreed = null;
+        selectedColor = null;
+        birthDate = null;
+      });
+
+      _showReturnDialog(context, "Pet atualizado com sucesso!");
+    }
+  }
+
+  void _showReturnDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Sucesso"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final petProvider = Provider.of<PetProvider>(context);
+
+    return Scaffold(
+      appBar: AppBar(title: Text("Cadastro do Pet")),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(labelText: "Nome do Pet"),
+            ),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(labelText: "Raça"),
+              value: selectedBreed,
+              items: dogBreeds.map((String breed) {
+                return DropdownMenuItem(value: breed, child: Text(breed));
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedBreed = value;
+                });
+              },
+            ),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(labelText: "Cor"),
+              value: selectedColor,
+              items: dogColors.map((String color) {
+                return DropdownMenuItem(value: color, child: Text(color));
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedColor = value;
+                });
+              },
+            ),
+            DropdownButtonFormField<String>(
+              value: gender,
+              decoration: InputDecoration(labelText: "Sexo"),
+              items: ["Macho", "Fêmea"].map((value) {
+                return DropdownMenuItem(value: value, child: Text(value));
+              }).toList(),
+              onChanged: (newValue) {
+                setState(() {
+                  gender = newValue!;
+                });
+              },
+            ),
+            TextField(
+              controller: birthDateController,
+              decoration: InputDecoration(
+                labelText: "Data de Nascimento",
+                suffixIcon: Icon(Icons.calendar_today),
+              ),
+              readOnly: true,
+              onTap: () => _pickDate(context),
+            ),
+            SizedBox(height: 16),
+
+            ElevatedButton(
+              onPressed: editingPet == null
+                  ? () async {
+                      if (nameController.text.isNotEmpty &&
+                          selectedBreed != null &&
+                          selectedColor != null &&
+                          birthDate != null) {
+                        await petProvider.addPet(
+                          nameController.text,
+                          selectedBreed!,
+                          gender,
+                          selectedColor!,
+                          birthDate!,
+                        );
+
+                        setState(() {
+                          nameController.clear();
+                          birthDateController.clear();
+                          selectedBreed = null;
+                          selectedColor = null;
+                          birthDate = null;
+                        });
+
+                        _showReturnDialog(context, "Pet cadastrado com sucesso!");
+                      }
+                    }
+                  : () => _updatePet(context), // 🔥 Chama a função de atualização
+              child: Text(editingPet == null ? "Salvar Pet" : "Atualizar Pet"),
+            ),
+
+            SizedBox(height: 24),
+
+            Expanded(
+              child: ListView(
+                children: petProvider.pets.map((pet) => _buildPetCard(pet)).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPetCard(Pet pet) {
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 8),
+      color: Colors.yellow[200],
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Colors.grey[300],
+          child: Icon(Icons.pets, color: Colors.black),
+        ),
+        title: Text(pet.name, style: TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(
+          "Raça: ${pet.breed}\n"
+          "Cor: ${pet.color}\n"
+          "Sexo: ${pet.gender}\n"
+          "Nascimento: ${DateFormat('dd/MM/yyyy').format(pet.birthDate)}",
+        ),
+        trailing: IconButton(
+          icon: Icon(Icons.edit, color: Colors.blue),
+          onPressed: () => _loadPetForEditing(pet), // 🔥 Adiciona a funcionalidade de edição
+        ),
+      ),
+    );
+  }
+}
+
+
+
+/*import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/pet_provider.dart';
+import 'package:intl/intl.dart';
+
+class PetRegisterScreen extends StatefulWidget {
+  @override
+  _PetRegisterScreenState createState() => _PetRegisterScreenState();
+}
+
+class _PetRegisterScreenState extends State<PetRegisterScreen> {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController birthDateController = TextEditingController();
+  String gender = "Macho";
+  String? selectedBreed;
+  String? selectedColor;
+  DateTime? birthDate;
 
 Pet? editingPet; // 🔥 Armazena o pet que está sendo editado
 
@@ -257,3 +496,4 @@ Pet? editingPet; // 🔥 Armazena o pet que está sendo editado
     );
   }
 }
+*/
