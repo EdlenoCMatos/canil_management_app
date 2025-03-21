@@ -99,18 +99,31 @@ class PetProvider with ChangeNotifier {
     }
   }
 
+  /// ✅ **Remove um pet do Firestore e da lista local**
+  Future<void> deletePet(String id) async {
+    _pets.removeWhere((pet) => pet.id == id);
+    notifyListeners();
+
+    try {
+      await _firestore.collection('pets').doc(id).delete();
+      print("Pet deletado com sucesso do Firestore.");
+    } catch (e) {
+      print("Erro ao deletar pet do Firestore: $e");
+    }
+  }
+
   /// ✅ **Busca um pet pelo ID**
   Pet? getPetById(String id) {
-  return _pets.firstWhere(
-    (pet) => pet.id == id,
-    orElse: () => Pet(
-      id: '',
-      name: 'Desconhecido',
-      breed: '',
-      gender: '',
-      color: '',
-      birthDate: DateTime(2000, 1, 1), // Data padrão para evitar erros
-    ),
+    return _pets.firstWhere(
+      (pet) => pet.id == id,
+      orElse: () => Pet(
+        id: '',
+        name: 'Desconhecido',
+        breed: '',
+        gender: '',
+        color: '',
+        birthDate: DateTime(2000, 1, 1),
+      ),
     );
   }
 
@@ -125,6 +138,8 @@ class PetProvider with ChangeNotifier {
     }
   }
 }
+
+
 
 
 

@@ -14,6 +14,7 @@ class MedicationProvider extends ChangeNotifier {
 
   List<Map<String, dynamic>> get medications => _medications;
   List<Map<String, dynamic>> get appliedMedications => _appliedMedications;
+
   List<Map<String, dynamic>> get pendingMedications {
     return _appliedMedications.where((med) => med['status'] == 'pending').toList();
   }
@@ -22,33 +23,43 @@ class MedicationProvider extends ChangeNotifier {
     return _appliedMedications.where((med) => med['status'] == 'overdue').toList();
   }
 
-  void addMedication(String name, DateTime date, {String manufacturer = '', String batch = ''}) {
-    final medication = _medications.firstWhere((med) => med['name'] == name, orElse: () => {});
-    
-    if (medication.isNotEmpty) {
-      int intervalDays = medication['interval'];
-      DateTime nextApplication = date.add(Duration(days: intervalDays));
+  void addMedication(
+    String name,
+    DateTime date, {
+    required String petId,
+    required String petName,
+    required String manufacturer,
+    required String batch,
+  }) {
+    final interval = _getIntervalForMedication(name);
+    final nextDate = date.add(Duration(days: interval));
 
-      String status = DateTime.now().isBefore(nextApplication) ? 'pending' : 'overdue';
+    _appliedMedications.add({
+      'name': name,
+      'date': date,
+      'nextDate': nextDate,
+      'manufacturer': manufacturer,
+      'batch': batch,
+      'petId': petId,
+      'petName': petName,
+    });
 
-      _appliedMedications.add({
-        'name': name,
-        'date': date,
-        'nextDate': nextApplication,
-        'manufacturer': manufacturer,
-        'batch': batch,
-        'status': status,
-      });
-
-      notifyListeners();
-    }
+    notifyListeners();
   }
 
-  DateTime? getNextApplicationDate(String name) {
-    var lastMed = _appliedMedications.where((med) => med['name'] == name).toList();
-    if (lastMed.isNotEmpty) {
-      lastMed.sort((a, b) => b['nextDate'].compareTo(a['nextDate']));
-      return lastMed.first['nextDate'];
+  int _getIntervalForMedication(String name) {
+    final med = _medications.firstWhere(
+      (m) => m['name'] == name,
+      orElse: () => {'interval': 30},
+    );
+    return med['interval'];
+  }
+
+  DateTime? getNextApplicationDate(String name, [String? petId]) {
+    var meds = _appliedMedications.where((med) => med['name'] == name && (petId == null || med['petId'] == petId)).toList();
+    if (meds.isNotEmpty) {
+      meds.sort((a, b) => b['nextDate'].compareTo(a['nextDate']));
+      return meds.first['nextDate'];
     }
     return null;
   }
