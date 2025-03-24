@@ -29,7 +29,7 @@ class _PetRegisterScreenState extends State<PetRegisterScreen> {
   ];
 
   final List<String> dogColors = [
-    "Preto", "Branco", "Marrom", "Caramelo", "Dourado", "Cinzento", "Tricolor", "Bicolor", "Rajado",
+    "Preto", "Branco", "Marrom", "Caramelo", "Dourado", "Cinzento", "Tricolor", "Bicolor", "Rajado", "BlackTan",
     "Tigrado", "Merle Azul", "Merle Vermelho", "Sable", "Creme", "Vermelho", "Chocolate", "Azul", "Cinza",
     "Bege", "Prata", "Champagne"
   ];

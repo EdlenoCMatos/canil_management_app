@@ -1,0 +1,26 @@
+# Padroniza final de linha para todos os arquivos de texto
+* text=auto
+
+# Arquivos específicos do Flutter com codificação de texto
+*.dart text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Multiplataforma
+*.h text
+*.cc text
+*.cpp text
+*.c text
+*.cmake text
+
+# Swift, Objective-C, etc.
+*.swift text
+*.m text
+*.mm text
+
+# Ignora mudanças de fim de linha em arquivos gerados automaticamente
+linux/flutter/* text eol=crlf
+windows/flutter/* text eol=crlf
+macos/Flutter/* text eol=crlf
