@@ -5,7 +5,7 @@ import '../models/animal_model.dart';
 class ApiService {
   final String baseUrl = 'https://sua-api.com';
 
-  Future<List<Animal>> getAnimals() async {
+  Future<List<Future<Animal>>> getAnimals() async {
     final response = await http.get(Uri.parse('$baseUrl/animals'));
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
